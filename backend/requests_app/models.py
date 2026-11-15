@@ -4,6 +4,8 @@ import uuid
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.core.exceptions import ValidationError
+
 class Category(models.Model):
     name = models.CharField(max_length=80, unique=True)
     description = models.TextField(blank=True)
@@ -14,6 +16,7 @@ class Category(models.Model):
         verbose_name_plural = "categories"
     def __str__(self):
         return self.name
+
 class ServiceRequest(models.Model):
     class Status(models.TextChoices):
         OPEN = "open", "Open"
@@ -46,24 +49,41 @@ class ServiceRequest(models.Model):
         db_index=True,
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    due_at = models.DateTimeField(null=True, blank=True)
+    resolution_summary = models.TextField(blank=True, default="")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-class Meta:
-    ordering = ("-created_at",)
-    indexes = [
-        models.Index(fields=("category", "status"), name="req_cat_status_idx"),
-        models.Index(fields=("priority", "created_at"), name="req_priority_date_idx"),
-    ]
-    constraints = [
-        models.CheckConstraint(
-            condition=models.Q(priority__gte=1, priority__lte=5),
-            name="request_priority_between_1_and_5",
-        ),
-    ]
+    def clean(self):
+        super().clean()
+        if self.status in (self.Status.RESOLVED, self.Status.CLOSED):
+            errors = {}
+            if self.resolved_at is None:
+                errors["resolved_at"] = "A resolved or closed request needs a resolved date."
+            if not (self.resolution_summary or "").strip():
+                errors["resolution_summary"] = "A resolved or closed request needs a resolution summary."
+            if errors:
+                raise ValidationError(errors)
 
-def __str__(self):
-    return f"{self.title} ({self.get_status_display()})"
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=("category", "status"), name="req_cat_status_idx"),
+            models.Index(fields=("priority", "created_at"), name="req_priority_date_idx"),
+
+            models.Index(fields=("status", "due_at"), name="req_status_due_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(priority__gte=1, priority__lte=5),
+                name="request_priority_between_1_and_5",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.get_status_display()})"
 
 
 class WorkOrder(models.Model):
@@ -85,6 +105,7 @@ class WorkOrder(models.Model):
         ordering = ("-created_at",)
     def __str__(self):
         return f"Work order for {self.service_request.title}"
+
 class Comment(models.Model):
     service_request = models.ForeignKey(
         ServiceRequest,

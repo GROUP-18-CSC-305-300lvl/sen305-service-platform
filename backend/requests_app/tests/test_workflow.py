@@ -68,6 +68,7 @@ class WorkflowTests(TestCase):
         self.assertIsNotNone(self.item.resolved_at)
         self.assertEqual(work_order.work_notes, "Replaced the HDMI cable.")
         self.assertIsNotNone(work_order.completed_at)
+        self.assertEqual(self.item.resolution_summary, "Replaced the HDMI cable.")
 
 
 class PaginationFilterTests(TestCase):
