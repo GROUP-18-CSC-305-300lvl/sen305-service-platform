@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import get_user_model
 
 from .models import Category, Comment, ServiceRequest
 
@@ -33,3 +34,29 @@ class CommentForm(forms.ModelForm):
         if len(body) < 3:
             raise forms.ValidationError("Enter a meaningful comment.")
         return body
+
+
+class AssignmentForm(forms.Form):
+    technician = forms.ModelChoiceField(
+        queryset=get_user_model().objects.none(),
+        empty_label="Choose a technician",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["technician"].queryset = (
+            get_user_model().objects.filter(is_staff=True, is_active=True).order_by("username")
+        )
+        self.fields["technician"].widget.attrs.setdefault("class", "form-control")
+
+
+class ResolutionForm(forms.Form):
+    work_notes = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
+    )
+
+    def clean_work_notes(self):
+        notes = self.cleaned_data["work_notes"].strip()
+        if len(notes) < 3:
+            raise forms.ValidationError("Describe the work done (at least 3 characters).")
+        return notes

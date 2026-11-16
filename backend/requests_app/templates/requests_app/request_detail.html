@@ -10,12 +10,45 @@
     <dt>Category</dt><dd>{{ item.category }}</dd>
     <dt>Location</dt><dd>{{ item.location }}</dd>
     <dt>Requester</dt><dd>{{ item.requester.username }}</dd>
+    <dt>Technician</dt><dd>{% if work_order %}{{ work_order.technician.username }}{% else %}Not assigned{% endif %}</dd>
+    {% if item.resolved_at %}
+    <dt>Resolved at</dt><dd>{{ item.resolved_at|date:"d M Y H:i" }}</dd>
+    {% endif %}
 </dl>
 
 <h2>Description</h2>
 <p>{{ item.description|linebreaksbr }}</p>
 
+{% if item.resolution_summary %}
+<h2>Resolution</h2>
+<p>{{ item.resolution_summary|linebreaksbr }}</p>
+{% endif %}
+
+{% if can_edit %}
 <p><a class="button" href="{% url 'requests:update' item.id %}">Edit request</a></p>
+{% endif %}
+
+{% if can_assign %}
+<h2>Assign technician</h2>
+<form method="post" action="{% url 'requests:assign' item.id %}">
+    {% csrf_token %}
+    <div class="form-row">
+        {{ assignment_form.technician.label_tag }} {{ assignment_form.technician }}
+    </div>
+    <button type="submit">Assign</button>
+</form>
+{% endif %}
+
+{% if can_resolve %}
+<h2>Resolve request</h2>
+<form method="post" action="{% url 'requests:resolve' item.id %}">
+    {% csrf_token %}
+    <div class="form-row">
+        {{ resolution_form.work_notes.label_tag }} {{ resolution_form.work_notes }}
+    </div>
+    <button type="submit">Mark resolved</button>
+</form>
+{% endif %}
 
 <h2>Comments</h2>
 {% for comment in comments %}

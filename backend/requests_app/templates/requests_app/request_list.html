@@ -6,6 +6,12 @@
     <a class="button" href="{% url 'requests:create' %}">New request</a>
 </header>
 
+<p class="summary-counts">
+    <strong>Open:</strong> {{ counts.open }}
+    &nbsp;|&nbsp; <strong>Assigned:</strong> {{ counts.assigned }}
+    &nbsp;|&nbsp; <strong>Resolved:</strong> {{ counts.resolved }}
+</p>
+
 <form method="get" class="filters">
     <label>Search <input name="q" value="{{ query }}"></label>
     <label>Status
@@ -40,11 +46,11 @@
 
 <nav aria-label="Request pages">
     {% if page_obj.has_previous %}
-    <a href="?q={{ query|urlencode }}&status={{ selected_status|urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
+    <a href="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
     {% endif %}
     <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-    <a href="?q={{ query|urlencode }}&status={{ selected_status|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+    <a href="?{% if filter_query %}{{ filter_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
     {% endif %}
 </nav>
 {% endblock %}
