@@ -7,7 +7,7 @@ from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils import timezone
 
-from .models import Category, ServiceRequest, WorkOrder
+from requests_app.models import Category, ServiceRequest, WorkOrder
 
 
 class ServiceRequestModelTests(TestCase):

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}VUA ServiceDesk{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'core/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/requests.css' %}">
 </head>
 <body>
     <header class="site-header">
@@ -28,11 +29,30 @@
                    {% if request.resolver_match.url_name == 'contact' %}aria-current="page"{% endif %}>
                     Contact
                 </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'requests:list' %}"
+                   {% if request.resolver_match.namespace == 'requests' %}aria-current="page"{% endif %}>
+                    Requests
+                </a>
+                <form method="post" action="{% url 'logout' %}" class="nav-form">
+                    {% csrf_token %}
+                    <button type="submit">Sign out</button>
+                </form>
+                {% else %}
+                <a href="{% url 'login' %}">Sign in</a>
+                {% endif %}
             </nav>
         </div>
     </header>
 
     <main class="container">
+        {% if messages %}
+        <div class="messages" aria-live="polite">
+            {% for message in messages %}
+            <p class="message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 
